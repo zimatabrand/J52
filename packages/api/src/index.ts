@@ -47,8 +47,8 @@ async function start() {
     await initializeSecrets();
     console.log('Secrets initialized');
 
+    // DB init is non-fatal - auth/token routes work without it
     await initializeDb();
-    console.log('Database connected');
 
     app.listen(PORT, () => {
       console.log(`j52-api listening on port ${PORT}`);
