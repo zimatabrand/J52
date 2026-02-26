@@ -1,0 +1,11 @@
+node_modules
+dist
+.git
+.github
+*.md
+.env*
+infra
+db
+packages/worker
+packages/desktop
+*.log
