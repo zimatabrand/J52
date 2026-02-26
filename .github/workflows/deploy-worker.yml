@@ -1,0 +1,50 @@
+name: Deploy j52-worker
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/worker/**'
+      - 'packages/shared/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install and build
+        run: |
+          npm ci
+          npm run build:shared
+          npm run build:worker
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy to VM
+        run: |
+          # Copy built files to VM
+          gcloud compute scp --recurse \
+            packages/worker/dist \
+            packages/shared/dist \
+            package.json \
+            j52-vm:/opt/j52/app/ \
+            --zone us-east1-b
+
+          # Install deps and restart service
+          gcloud compute ssh j52-vm --zone us-east1-b --command \
+            "cd /opt/j52/app && npm install --production && sudo systemctl restart j52-worker"

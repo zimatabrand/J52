@@ -1,0 +1,17 @@
+{
+  "name": "@j52/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "J52 Desktop thin client (Electron) - future",
+  "main": "dist/electron/main.js",
+  "scripts": {
+    "build": "echo 'Desktop build not yet configured'",
+    "dev": "echo 'Desktop dev not yet configured'"
+  },
+  "dependencies": {
+    "@j52/shared": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

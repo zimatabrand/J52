@@ -1,0 +1,25 @@
+{
+  "name": "j52",
+  "version": "0.1.0",
+  "private": true,
+  "description": "J52 - Cloud-Native Voice Assistant + Project Manager",
+  "workspaces": [
+    "packages/shared",
+    "packages/api",
+    "packages/worker",
+    "packages/desktop"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "build:shared": "npm run build -w packages/shared",
+    "build:api": "npm run build -w packages/api",
+    "build:worker": "npm run build -w packages/worker",
+    "dev:api": "npm run dev -w packages/api",
+    "dev:worker": "npm run dev -w packages/worker",
+    "lint": "eslint packages/*/src/**/*.ts",
+    "db:migrate": "ts-node db/migrate.ts"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
