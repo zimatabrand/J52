@@ -23,3 +23,13 @@
   - `tsconfig.tsbuildinfo` added to `.gitignore` to prevent stale build cache on VM
 - **Files modified:** 47 files created (full monorepo scaffold), plus `.ai/` context files
 - **Next priority:** Wire up tool proxy between API and worker VM, configure Claude Code API key on VM, clone first project repo
+
+## Session 2 — 2026-02-26
+- **Model:** Claude Opus 4.6
+- **What was done:**
+  1. Continued from previous context (context window ran out mid-migration)
+  2. Completed `.ai/` context system migration — created `context.md`, `session_log.md`, `active_tasks.md`, `START.md`
+  3. Updated `xx.save` description in `START.md` to match updated template (now mentions git commit + push)
+- **Key decisions:** None — minor template wording update
+- **Files modified:** `START.md` (xx.save description updated)
+- **Next priority:** Wire up tool proxy between API and worker VM

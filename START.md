@@ -125,7 +125,7 @@ gh auth switch --user zimatabrand
 
 ## Context Commands
 
-- **`xx.save`** — Save all current work context to `.ai/` files so the next session can resume seamlessly. See `E:\2026_Code\000_chat_instructions\context_system.md` for full details.
+- **`xx.save`** — Save all current work context to `.ai/` files, then git commit and push to GitHub. Everything is saved — code, context, and history. See `E:\2026_Code\000_chat_instructions\context_system.md` for full details.
 
 ---
 
