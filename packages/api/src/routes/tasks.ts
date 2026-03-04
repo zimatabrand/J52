@@ -19,7 +19,7 @@ tasksRouter.get('/', async (req: Request, res: Response) => {
 
     const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
     const result = await query(
-      `SELECT * FROM public.tasks ${where} ORDER BY priority DESC, created_at DESC LIMIT 200`,
+      `SELECT * FROM j5.tasks ${where} ORDER BY priority DESC, created_at DESC LIMIT 200`,
       params
     );
     res.json({ tasks: result.rows });
@@ -32,7 +32,7 @@ tasksRouter.get('/', async (req: Request, res: Response) => {
 // GET /tasks/:id
 tasksRouter.get('/:id', async (req: Request, res: Response) => {
   try {
-    const result = await query(`SELECT * FROM public.tasks WHERE task_id = $1`, [req.params.id]);
+    const result = await query(`SELECT * FROM j5.tasks WHERE task_id = $1`, [req.params.id]);
     if (result.rows.length === 0) { res.status(404).json({ error: 'Task not found' }); return; }
     res.json({ task: result.rows[0] });
   } catch (error) {
@@ -50,7 +50,7 @@ tasksRouter.post('/', async (req: Request, res: Response) => {
     if (!taskTitle) { res.status(400).json({ error: 'taskTitle is required' }); return; }
 
     const result = await query(
-      `INSERT INTO public.tasks
+      `INSERT INTO j5.tasks
        (task_title, task_description, task_type, priority, schema_code,
         session_id, parent_task_id, assigned_to, due_date, estimated_hours, tags)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -98,7 +98,7 @@ tasksRouter.patch('/:id', async (req: Request, res: Response) => {
 
     values.push(req.params.id);
     const result = await query(
-      `UPDATE public.tasks SET ${fields.join(', ')} WHERE task_id = $${idx} RETURNING *`,
+      `UPDATE j5.tasks SET ${fields.join(', ')} WHERE task_id = $${idx} RETURNING *`,
       values
     );
     res.json({ task: result.rows[0] });
@@ -111,7 +111,7 @@ tasksRouter.patch('/:id', async (req: Request, res: Response) => {
 // DELETE /tasks/:id
 tasksRouter.delete('/:id', async (req: Request, res: Response) => {
   try {
-    await query(`DELETE FROM public.tasks WHERE task_id = $1`, [req.params.id]);
+    await query(`DELETE FROM j5.tasks WHERE task_id = $1`, [req.params.id]);
     res.json({ success: true });
   } catch (error) {
     console.error('Delete task error:', error);

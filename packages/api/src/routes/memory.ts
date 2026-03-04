@@ -9,7 +9,7 @@ memoryRouter.use(requireSession);
 memoryRouter.get('/', async (_req: Request, res: Response) => {
   try {
     const result = await query(
-      `SELECT * FROM public.memory_facts ORDER BY created_at DESC`
+      `SELECT * FROM j5.memory_facts ORDER BY created_at DESC`
     );
     res.json({ facts: result.rows });
   } catch (error) {
@@ -26,18 +26,18 @@ memoryRouter.post('/', async (req: Request, res: Response) => {
     if (content.length > 500) { res.status(400).json({ error: 'content max 500 chars' }); return; }
 
     // Check max 50 facts
-    const countResult = await query(`SELECT COUNT(*) as cnt FROM public.memory_facts`);
+    const countResult = await query(`SELECT COUNT(*) as cnt FROM j5.memory_facts`);
     if (parseInt(countResult.rows[0].cnt) >= 50) {
       // Delete oldest
       await query(
-        `DELETE FROM public.memory_facts WHERE fact_id = (
-          SELECT fact_id FROM public.memory_facts ORDER BY created_at ASC LIMIT 1
+        `DELETE FROM j5.memory_facts WHERE fact_id = (
+          SELECT fact_id FROM j5.memory_facts ORDER BY created_at ASC LIMIT 1
         )`
       );
     }
 
     const result = await query(
-      `INSERT INTO public.memory_facts (content, category, source) VALUES ($1, $2, $3) RETURNING *`,
+      `INSERT INTO j5.memory_facts (content, category, source) VALUES ($1, $2, $3) RETURNING *`,
       [content, category || 'general', source || 'user']
     );
     res.status(201).json({ fact: result.rows[0] });
@@ -50,7 +50,7 @@ memoryRouter.post('/', async (req: Request, res: Response) => {
 // DELETE /memory/:id - Delete a fact
 memoryRouter.delete('/:id', async (req: Request, res: Response) => {
   try {
-    await query(`DELETE FROM public.memory_facts WHERE fact_id = $1`, [req.params.id]);
+    await query(`DELETE FROM j5.memory_facts WHERE fact_id = $1`, [req.params.id]);
     res.json({ success: true });
   } catch (error) {
     console.error('Delete fact error:', error);
@@ -62,7 +62,7 @@ memoryRouter.delete('/:id', async (req: Request, res: Response) => {
 memoryRouter.delete('/search/:term', async (req: Request, res: Response) => {
   try {
     const result = await query(
-      `DELETE FROM public.memory_facts WHERE content ILIKE $1 RETURNING *`,
+      `DELETE FROM j5.memory_facts WHERE content ILIKE $1 RETURNING *`,
       [`%${req.params.term}%`]
     );
     res.json({ deleted: result.rowCount, facts: result.rows });

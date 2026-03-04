@@ -17,6 +17,11 @@ export async function initializeWorkerDb(): Promise<void> {
     connectionTimeoutMillis: 10000
   });
 
+  // All J52 tables live in the j5 schema
+  pool.on('connect', (client) => {
+    client.query('SET search_path TO j5, public');
+  });
+
   // Test connection
   try {
     const client = await pool.connect();

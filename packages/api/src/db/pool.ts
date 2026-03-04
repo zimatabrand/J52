@@ -27,6 +27,11 @@ export async function initializeDb(): Promise<void> {
 
   pool = new Pool(poolConfig);
 
+  // All J52 tables live in the j5 schema
+  pool.on('connect', (client) => {
+    client.query('SET search_path TO j5, public');
+  });
+
   // Test connection - non-fatal in production (DB may not be reachable yet)
   try {
     const client = await pool.connect();

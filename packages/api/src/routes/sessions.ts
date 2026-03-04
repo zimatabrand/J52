@@ -9,7 +9,7 @@ sessionsRouter.use(requireSession);
 sessionsRouter.get('/', async (req: Request, res: Response) => {
   try {
     const schemaCode = req.query.schemaCode as string | undefined;
-    let sql = `SELECT * FROM public.ai_sessions`;
+    let sql = `SELECT * FROM j5.ai_sessions`;
     const params: unknown[] = [];
 
     if (schemaCode) {
@@ -29,7 +29,7 @@ sessionsRouter.get('/', async (req: Request, res: Response) => {
 // GET /sessions/:id
 sessionsRouter.get('/:id', async (req: Request, res: Response) => {
   try {
-    const result = await query(`SELECT * FROM public.ai_sessions WHERE session_id = $1`, [req.params.id]);
+    const result = await query(`SELECT * FROM j5.ai_sessions WHERE session_id = $1`, [req.params.id]);
     if (result.rows.length === 0) {
       res.status(404).json({ error: 'Session not found' });
       return;
@@ -46,7 +46,7 @@ sessionsRouter.post('/', async (req: Request, res: Response) => {
   try {
     const { schemaCode, aiProvider, role, sessionName, model, parentSessionId } = req.body;
     const result = await query(
-      `INSERT INTO public.ai_sessions (schema_code, ai_provider, role, session_name, model, parent_session_id)
+      `INSERT INTO j5.ai_sessions (schema_code, ai_provider, role, session_name, model, parent_session_id)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
       [schemaCode || null, aiProvider || 'claude', role || 'assistant',
@@ -83,7 +83,7 @@ sessionsRouter.patch('/:id', async (req: Request, res: Response) => {
 
     values.push(req.params.id);
     const result = await query(
-      `UPDATE public.ai_sessions SET ${fields.join(', ')} WHERE session_id = $${idx} RETURNING *`,
+      `UPDATE j5.ai_sessions SET ${fields.join(', ')} WHERE session_id = $${idx} RETURNING *`,
       values
     );
     res.json({ session: result.rows[0] });
@@ -99,7 +99,7 @@ sessionsRouter.get('/:id/messages', async (req: Request, res: Response) => {
     const limit = Math.min(parseInt(req.query.limit as string) || 100, 500);
     const offset = parseInt(req.query.offset as string) || 0;
     const result = await query(
-      `SELECT * FROM public.chat_io_log
+      `SELECT * FROM j5.chat_io_log
        WHERE session_id = $1
        ORDER BY sequence_number ASC
        LIMIT $2 OFFSET $3`,
@@ -123,13 +123,13 @@ sessionsRouter.post('/:id/messages', async (req: Request, res: Response) => {
 
     // Get next sequence number
     const seqResult = await query(
-      `SELECT COALESCE(MAX(sequence_number), 0) + 1 AS next_seq FROM public.chat_io_log WHERE session_id = $1`,
+      `SELECT COALESCE(MAX(sequence_number), 0) + 1 AS next_seq FROM j5.chat_io_log WHERE session_id = $1`,
       [req.params.id]
     );
     const nextSeq = seqResult.rows[0].next_seq;
 
     const result = await query(
-      `INSERT INTO public.chat_io_log
+      `INSERT INTO j5.chat_io_log
        (session_id, io_type, content, content_format, token_count, model_used, processing_time_ms, metadata, sequence_number)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,

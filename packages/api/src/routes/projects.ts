@@ -16,8 +16,8 @@ projectsRouter.get('/', async (_req: Request, res: Response) => {
               p.primary_language, p.framework, p.is_active,
               p.created_at, p.updated_at,
               sr.schema_name, sr.schema_level, sr.parent_schema_code
-       FROM public.projects p
-       JOIN public.schema_registry sr ON sr.schema_code = p.schema_code
+       FROM j5.projects p
+       JOIN j5.schema_registry sr ON sr.schema_code = p.schema_code
        WHERE p.is_active = TRUE
        ORDER BY sr.schema_level, p.project_name`
     );
@@ -34,8 +34,8 @@ projectsRouter.get('/:code', async (req: Request, res: Response) => {
     const { code } = req.params;
     const result = await query(
       `SELECT p.*, sr.schema_name, sr.schema_level, sr.parent_schema_code, sr.has_project_manager_ai
-       FROM public.projects p
-       JOIN public.schema_registry sr ON sr.schema_code = p.schema_code
+       FROM j5.projects p
+       JOIN j5.schema_registry sr ON sr.schema_code = p.schema_code
        WHERE p.schema_code = $1`,
       [code.toUpperCase()]
     );
@@ -65,7 +65,7 @@ projectsRouter.post('/', async (req: Request, res: Response) => {
     }
 
     const result = await query(
-      `SELECT public.create_project_schema($1, $2, $3, $4, $5, $6, $7, $8, $9) AS result`,
+      `SELECT j5.create_project_schema($1, $2, $3, $4, $5, $6, $7, $8, $9) AS result`,
       [
         schemaCode, schemaName || projectName, projectName, projectType,
         baseDirectory, tempDirectory || null, description || null,
@@ -113,7 +113,7 @@ projectsRouter.patch('/:code', async (req: Request, res: Response) => {
 
     values.push(code.toUpperCase());
     await query(
-      `UPDATE public.projects SET ${fields.join(', ')} WHERE schema_code = $${idx}`,
+      `UPDATE j5.projects SET ${fields.join(', ')} WHERE schema_code = $${idx}`,
       values
     );
 

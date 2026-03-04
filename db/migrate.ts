@@ -10,9 +10,10 @@ async function migrate() {
   const pool = new Pool({ connectionString: DATABASE_URL });
 
   try {
-    // Ensure migrations table exists
+    // Ensure j5 schema and migrations table exist
+    await pool.query(`CREATE SCHEMA IF NOT EXISTS j5`);
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS public.schema_migrations (
+      CREATE TABLE IF NOT EXISTS j5.schema_migrations (
         version INTEGER PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -21,7 +22,7 @@ async function migrate() {
 
     // Get already-applied migrations
     const { rows: applied } = await pool.query(
-      'SELECT version FROM public.schema_migrations ORDER BY version'
+      'SELECT version FROM j5.schema_migrations ORDER BY version'
     );
     const appliedVersions = new Set(applied.map(r => r.version));
 
