@@ -4,6 +4,10 @@ import { query } from '../db/pool.js';
 
 export const projectsRouter = Router();
 
+const WORKER_URL = process.env.WORKER_URL || 'http://35.211.50.24:9000';
+const WORKER_SECRET = process.env.WORKER_SECRET || '';
+const REPOS_ROOT = '/opt/j52/repos';
+
 // All project routes require auth
 projectsRouter.use(requireSession);
 
@@ -25,6 +29,69 @@ projectsRouter.get('/', async (_req: Request, res: Response) => {
   } catch (error) {
     console.error('List projects error:', error);
     res.status(500).json({ error: 'Failed to list projects' });
+  }
+});
+
+// GET /projects/browse?path=<relative> - Browse directories on worker VM
+projectsRouter.get('/browse', async (req: Request, res: Response) => {
+  try {
+    const relativePath = (req.query.path as string) || '';
+
+    // Security: reject path traversal
+    if (relativePath.includes('..')) {
+      res.status(400).json({ error: 'Path traversal not allowed' });
+      return;
+    }
+
+    const fullPath = relativePath ? `${REPOS_ROOT}/${relativePath}` : REPOS_ROOT;
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (WORKER_SECRET) headers['x-worker-secret'] = WORKER_SECRET;
+
+    const response = await fetch(`${WORKER_URL}/tools/list-dir`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ path: fullPath }),
+      signal: AbortSignal.timeout(10_000)
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      res.status(502).json({ error: `Worker error: ${text}` });
+      return;
+    }
+
+    const data = await response.json() as { entries?: Array<{ name: string; type: string }>; result?: string };
+
+    // Worker may return entries directly or as a result string
+    let entries: Array<{ name: string; type: string; path: string }> = [];
+    if (data.entries) {
+      entries = data.entries.map((e: { name: string; type: string }) => ({
+        name: e.name,
+        type: e.type,
+        path: relativePath ? `${relativePath}/${e.name}` : e.name
+      }));
+    } else if (typeof data.result === 'string') {
+      // Parse ls-style output: each line is a file/dir name
+      const lines = data.result.split('\n').filter((l: string) => l.trim());
+      entries = lines.map((name: string) => ({
+        name: name.replace(/\/$/, ''),
+        type: name.endsWith('/') ? 'directory' : 'file',
+        path: relativePath ? `${relativePath}/${name.replace(/\/$/, '')}` : name.replace(/\/$/, '')
+      }));
+    }
+
+    // Sort: directories first, then alphabetical
+    entries.sort((a, b) => {
+      if (a.type === 'directory' && b.type !== 'directory') return -1;
+      if (a.type !== 'directory' && b.type === 'directory') return 1;
+      return a.name.localeCompare(b.name);
+    });
+
+    res.json({ entries });
+  } catch (error: any) {
+    console.error('Browse projects error:', error.message);
+    res.status(500).json({ error: 'Failed to browse projects' });
   }
 });
 
