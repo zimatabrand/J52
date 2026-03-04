@@ -8,6 +8,7 @@ import { sessionsRouter } from './routes/sessions.js';
 import { tasksRouter } from './routes/tasks.js';
 import { memoryRouter } from './routes/memory.js';
 import { toolsRouter } from './routes/tools.js';
+import { notificationsRouter } from './routes/notifications.js';
 import { initializeSecrets } from './services/secret-manager.js';
 import { initializeDb } from './db/pool.js';
 
@@ -37,6 +38,7 @@ app.use('/sessions', sessionsRouter);
 app.use('/tasks', tasksRouter);
 app.use('/memory', memoryRouter);
 app.use('/tools', toolsRouter);
+app.use('/notifications', notificationsRouter);
 
 // Error handling
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

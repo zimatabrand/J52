@@ -72,16 +72,31 @@ const TOOLS = [
   },
   {
     type: 'function', name: 'run_claude_code',
-    description: 'Run Claude Code on a project with a specific task/prompt. Returns results when complete.',
+    description: 'Queue a Claude Code task on a project. Returns a task_id immediately — the task runs in the background. Use check_task_status to monitor progress.',
     parameters: {
       type: 'object',
       properties: {
         project_path: { type: 'string', description: 'Full path to the project folder on the VM' },
-        prompt: { type: 'string', description: 'Task/instructions for Claude Code' },
-        timeout_seconds: { type: 'number', description: 'Max time (default 600, max 900)' }
+        prompt: { type: 'string', description: 'Task/instructions for Claude Code' }
       },
       required: ['project_path', 'prompt']
     }
+  },
+  {
+    type: 'function', name: 'check_task_status',
+    description: 'Check the status and results of a queued Claude Code task.',
+    parameters: {
+      type: 'object',
+      properties: {
+        task_id: { type: 'number', description: 'The task ID returned by run_claude_code' }
+      },
+      required: ['task_id']
+    }
+  },
+  {
+    type: 'function', name: 'list_running_tasks',
+    description: 'List all currently queued and in-progress Claude Code tasks.',
+    parameters: { type: 'object', properties: {} }
   },
   {
     type: 'function', name: 'list_projects',
@@ -144,9 +159,19 @@ Your Tools:
 - run_shell: Execute commands on the Linux worker VM (bash, not PowerShell)
 - read_text_file / list_directory: File operations on the VM
 - web_search / web_extract: Real-time web info
-- run_claude_code: Run Claude Code on a project (background)
+- run_claude_code: Queue a Claude Code task on a project — returns immediately with a task_id
+- check_task_status: Check if a queued task is done and get its results
+- list_running_tasks: See all queued and in-progress Claude Code tasks
 - list_projects / get_project_context: Project management
 - remember_fact / recall_memory / forget_fact: Persistent memory
+
+ASYNC TASK WORKFLOW:
+- run_claude_code queues work in the background and returns a task_id immediately
+- You can queue multiple projects at once — up to 3 run in parallel
+- Tell the user the task is queued and they can ask for status anytime
+- Use check_task_status with the task_id to see if it's done
+- When a task completes, share the result_summary with the user
+- If a task fails, share the error_message
 
 IMPORTANT:
 - Take action! Don't ask "would you like me to..." - just do it

@@ -91,11 +91,50 @@ toolsRouter.post('/execute', requireSession, async (req: Request, res: Response)
       }
 
       case 'run_claude_code': {
-        result = await dispatchToWorker('/tools/claude-run', {
-          projectPath: args.project_path,
-          prompt: args.prompt,
-          timeoutSeconds: args.timeout_seconds
-        }, CLAUDE_TIMEOUT_MS);
+        // Async: insert task into DB queue, return task_id immediately
+        const taskTitle = args.prompt.slice(0, 100) + (args.prompt.length > 100 ? '...' : '');
+        const { rows } = await query<{ task_id: number }>(
+          `INSERT INTO tasks (task_title, task_description, task_type, status, priority, project_path, claude_prompt, queued_at)
+           VALUES ($1, $2, 'claude_code', 'queued', 8, $3, $4, NOW())
+           RETURNING task_id`,
+          [taskTitle, args.prompt, args.project_path, args.prompt]
+        );
+        result = {
+          success: true,
+          result: {
+            task_id: rows[0].task_id,
+            status: 'queued',
+            message: `Task #${rows[0].task_id} queued. Use check_task_status to monitor progress.`
+          }
+        };
+        break;
+      }
+
+      case 'check_task_status': {
+        const { rows } = await query(
+          `SELECT task_id, task_title, status, queued_at, started_at_worker, completed_date,
+                  result_summary, error_message, project_path,
+                  execution_metadata
+           FROM tasks WHERE task_id = $1`,
+          [args.task_id]
+        );
+        if (rows.length === 0) {
+          result = { success: false, error: `Task #${args.task_id} not found` };
+        } else {
+          result = { success: true, result: { task: rows[0] } };
+        }
+        break;
+      }
+
+      case 'list_running_tasks': {
+        const { rows } = await query(
+          `SELECT task_id, task_title, status, project_path, queued_at, started_at_worker, worker_id
+           FROM tasks
+           WHERE task_type = 'claude_code'
+             AND status IN ('queued', 'in_progress')
+           ORDER BY queued_at ASC`
+        );
+        result = { success: true, result: { tasks: rows } };
         break;
       }
 

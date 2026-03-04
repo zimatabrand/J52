@@ -1,4 +1,4 @@
-export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'blocked' | 'deferred';
+export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'blocked' | 'deferred' | 'queued' | 'failed';
 export type TaskPriority = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
 export interface Task {
@@ -19,6 +19,16 @@ export interface Task {
   tags: string[];
   createdAt: string;
   updatedAt: string;
+  // Async execution fields
+  workerId: string | null;
+  queuedAt: string | null;
+  startedAtWorker: string | null;
+  resultSummary: string | null;
+  resultOutput: string | null;
+  errorMessage: string | null;
+  projectPath: string | null;
+  claudePrompt: string | null;
+  executionMetadata: Record<string, unknown> | null;
 }
 
 export interface CreateTaskInput {

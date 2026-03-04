@@ -2,7 +2,7 @@ import { spawn } from 'child_process';
 import type { ShellExecRequest, ShellExecResult } from '@j52/shared';
 
 const DEFAULT_TIMEOUT_S = 60;
-const MAX_TIMEOUT_S = 300;
+const MAX_TIMEOUT_S = 900;
 const MAX_OUTPUT_BYTES = 512_000; // 500KB
 
 export class ShellTool {

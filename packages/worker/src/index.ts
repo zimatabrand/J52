@@ -5,6 +5,8 @@ import { WebSearchTool } from './tools/web-search.js';
 import { GitOpsTool } from './tools/git-ops.js';
 import { ClaudeRunner } from './claude-runner/runner.js';
 import { Scheduler } from './scheduler/scheduler.js';
+import { initializeWorkerDb } from './db/pool.js';
+import { TaskQueue } from './queue/task-queue.js';
 
 const HEARTBEAT_INTERVAL_MS = 30_000;
 const PORT = parseInt(process.env.WORKER_PORT || '9000', 10);
@@ -25,6 +27,21 @@ async function main() {
   const scheduler = new Scheduler();
 
   console.log(`Tools loaded: shell, fileOps, webSearch, gitOps, claudeRunner`);
+
+  // Initialize DB and task queue (non-fatal if DATABASE_URL not set)
+  let taskQueue: TaskQueue | null = null;
+  if (process.env.DATABASE_URL) {
+    try {
+      await initializeWorkerDb();
+      taskQueue = new TaskQueue(claudeRunner);
+      scheduler.register('task-queue-poll', 10_000, () => taskQueue!.pollAndExecute());
+      console.log('Task queue initialized (max 3 concurrent)');
+    } catch (err) {
+      console.warn('Task queue init failed (will run without async tasks):', (err as Error).message);
+    }
+  } else {
+    console.log('DATABASE_URL not set — task queue disabled');
+  }
 
   // --- HTTP Server for tool dispatch ---
   const app = express();
@@ -52,6 +69,19 @@ async function main() {
       service: 'j52-worker',
       uptime: Math.round(process.uptime()),
       timestamp: new Date().toISOString()
+    });
+  });
+
+  // Queue status
+  app.get('/queue/status', (_req, res) => {
+    if (!taskQueue) {
+      res.json({ enabled: false, message: 'Task queue not initialized' });
+      return;
+    }
+    res.json({
+      enabled: true,
+      active: taskQueue.activeCount,
+      available: taskQueue.availableSlots
     });
   });
 
