@@ -103,7 +103,7 @@ toolsRouter.post('/execute', requireSession, async (req: Request, res: Response)
 
       case 'list_projects': {
         const { rows } = await query(
-          'SELECT id, name, code, repo_url, status FROM projects ORDER BY name'
+          'SELECT project_id, project_name, schema_code, git_repository_url, is_active FROM projects WHERE is_active = true ORDER BY project_name'
         );
         result = { success: true, result: { projects: rows } };
         break;
@@ -111,7 +111,7 @@ toolsRouter.post('/execute', requireSession, async (req: Request, res: Response)
 
       case 'get_project_context': {
         const { rows } = await query(
-          'SELECT id, name, code, repo_url, description, status FROM projects WHERE code = $1',
+          'SELECT project_id, project_name, schema_code, git_repository_url, base_directory, description, primary_language, framework FROM projects WHERE schema_code = $1',
           [args.project_code]
         );
         if (rows.length === 0) {
@@ -133,7 +133,7 @@ toolsRouter.post('/execute', requireSession, async (req: Request, res: Response)
 
       case 'recall_memory': {
         const { rows } = await query(
-          'SELECT id, content, category, created_at FROM memory_facts ORDER BY created_at DESC'
+          'SELECT fact_id, content, category, created_at FROM memory_facts ORDER BY created_at DESC'
         );
         result = { success: true, result: { facts: rows } };
         break;
