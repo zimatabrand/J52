@@ -1,8 +1,8 @@
 import { ShellTool } from '../tools/shell.js';
 import type { ClaudeCodeRequest, ClaudeCodeResult } from '@j52/shared';
 
-const DEFAULT_TIMEOUT_S = 600;
-const MAX_TIMEOUT_S = 900;
+const DEFAULT_TIMEOUT_S = 1200;
+const MAX_TIMEOUT_S = 1500;
 
 export class ClaudeRunner {
   constructor(private shell: ShellTool) {}
