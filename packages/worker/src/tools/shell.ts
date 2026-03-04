@@ -2,8 +2,8 @@ import { spawn } from 'child_process';
 import type { ShellExecRequest, ShellExecResult } from '@j52/shared';
 
 const DEFAULT_TIMEOUT_S = 60;
-const MAX_TIMEOUT_S = 900;
-const MAX_OUTPUT_BYTES = 512_000; // 500KB
+const MAX_TIMEOUT_S = 1500;
+const MAX_OUTPUT_BYTES = 1_048_576; // 1MB
 
 export class ShellTool {
   async exec(request: ShellExecRequest): Promise<ShellExecResult> {

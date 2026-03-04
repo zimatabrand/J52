@@ -23,7 +23,7 @@ async function main() {
   const fileOps = new FileOpsTool();
   const webSearch = new WebSearchTool();
   const gitOps = new GitOpsTool(shell);
-  const claudeRunner = new ClaudeRunner(shell);
+  const claudeRunner = new ClaudeRunner(shell, fileOps);
   const scheduler = new Scheduler();
 
   console.log(`Tools loaded: shell, fileOps, webSearch, gitOps, claudeRunner`);
