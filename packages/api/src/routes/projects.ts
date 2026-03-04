@@ -61,23 +61,17 @@ projectsRouter.get('/browse', async (req: Request, res: Response) => {
       return;
     }
 
-    const data = await response.json() as { entries?: Array<{ name: string; type: string }>; result?: string };
+    const data = await response.json() as any;
 
-    // Worker may return entries directly or as a result string
+    // Worker returns { success, result: { entries: [{ name, path, isDirectory }] } }
     let entries: Array<{ name: string; type: string; path: string }> = [];
-    if (data.entries) {
-      entries = data.entries.map((e: { name: string; type: string }) => ({
+    const rawEntries = data?.result?.entries || data?.entries || [];
+
+    if (Array.isArray(rawEntries) && rawEntries.length > 0) {
+      entries = rawEntries.map((e: any) => ({
         name: e.name,
-        type: e.type,
+        type: e.isDirectory ? 'directory' : (e.type || 'file'),
         path: relativePath ? `${relativePath}/${e.name}` : e.name
-      }));
-    } else if (typeof data.result === 'string') {
-      // Parse ls-style output: each line is a file/dir name
-      const lines = data.result.split('\n').filter((l: string) => l.trim());
-      entries = lines.map((name: string) => ({
-        name: name.replace(/\/$/, ''),
-        type: name.endsWith('/') ? 'directory' : 'file',
-        path: relativePath ? `${relativePath}/${name.replace(/\/$/, '')}` : name.replace(/\/$/, '')
       }));
     }
 
