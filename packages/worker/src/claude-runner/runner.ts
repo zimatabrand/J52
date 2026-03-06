@@ -19,6 +19,35 @@ export class ClaudeRunner {
     private fileOps: FileOpsTool
   ) {}
 
+  async prepareProject(projectPath: string): Promise<string | null> {
+    // Best-effort git pull — don't fail the task if this doesn't work
+    try {
+      const pullResult = await this.shell.exec({
+        command: 'git pull --ff-only 2>&1 || true',
+        cwd: projectPath,
+        timeoutSeconds: 30
+      });
+      const firstLine = pullResult.stdout?.trim().split('\n')[0] || '';
+      if (firstLine) {
+        console.log(`[claude-runner] Git pull: ${firstLine}`);
+      }
+    } catch (err) {
+      console.warn('[claude-runner] Git pull failed (continuing):', (err as Error).message);
+    }
+
+    // Read git info for context
+    try {
+      const gitInfo = await this.shell.exec({
+        command: 'echo "Remote:" && git remote -v 2>/dev/null | head -2 && echo "Branch:" && git branch --show-current 2>/dev/null',
+        cwd: projectPath,
+        timeoutSeconds: 5
+      });
+      return gitInfo.stdout?.trim() || null;
+    } catch {
+      return null;
+    }
+  }
+
   async readContextFiles(projectPath: string): Promise<ProjectContext> {
     const tryRead = async (filename: string): Promise<string | null> => {
       try {
@@ -45,7 +74,7 @@ export class ClaudeRunner {
     return entries.slice(-MAX_SESSION_LOG_ENTRIES).join('');
   }
 
-  buildPrompt(userPrompt: string, context: ProjectContext): string {
+  buildPrompt(userPrompt: string, context: ProjectContext, gitInfo?: string | null): string {
     const hasContext = context.startMd || context.contextMd || context.activeTasksMd || context.sessionLogMd;
 
     if (!hasContext) {
@@ -81,6 +110,10 @@ Save your work by updating the project's context files:
       sections.push(`=== RECENT SESSION HISTORY ===\n${truncated}`);
     }
 
+    if (gitInfo) {
+      sections.push(`=== GIT INFO ===\n${gitInfo}`);
+    }
+
     sections.push(`=== YOUR TASK ===\n${userPrompt}`);
 
     sections.push(`=== AFTER COMPLETING YOUR TASK ===
@@ -98,6 +131,12 @@ If .ai/ directory doesn't exist, create it with these files before saving.`);
 
   async run(request: ClaudeCodeRequest): Promise<ClaudeCodeResult> {
     const timeout = Math.min(request.timeoutSeconds || DEFAULT_TIMEOUT_S, MAX_TIMEOUT_S);
+
+    // Prepare project: pull latest + read git info
+    let gitInfo: string | null = null;
+    if (request.projectPath) {
+      gitInfo = await this.prepareProject(request.projectPath);
+    }
 
     // Pre-read project context files
     let context: ProjectContext = { startMd: null, contextMd: null, activeTasksMd: null, sessionLogMd: null };
@@ -119,7 +158,7 @@ If .ai/ directory doesn't exist, create it with these files before saving.`);
     }
 
     // Build context-aware prompt
-    const fullPrompt = this.buildPrompt(request.prompt, context);
+    const fullPrompt = this.buildPrompt(request.prompt, context, gitInfo);
 
     // Escape the prompt for shell
     const escapedPrompt = fullPrompt
