@@ -71,13 +71,27 @@ Plus `create_project_schema()` function for dynamic per-project schemas.
 - **systemd** for worker daemon management on VM
 - **Per-project PostgreSQL schemas** — dynamic schema creation via SQL function, same pattern as Enhanced AI Chat Bot
 
+## Git Pipeline (VM)
+
+The worker runs as the `j52` user on the VM. Git operations require:
+
+- **Git global config:** `user.name="J52 Worker"`, `user.email="dev@radpowersports.com"`, `safe.directory=*`
+- **Multi-account SSH:** `/home/j52/.ssh/config` maps host aliases to SSH keys:
+  - `github.com` → `id_ed25519` (zimatabrand account, default)
+  - `github-dixmont` → `id_dixmont` (dixmontselect-sys account)
+- **Per-project remotes:** Each repo's remote URL uses the correct host alias (e.g., `git@github-dixmont:dixmontselect-sys/dixmont-site.git`)
+- **Runner prep:** `prepareProject()` does best-effort `git pull --ff-only` and reads git remote/branch info into the prompt's `=== GIT INFO ===` section
+
+**Adding a new project with a non-default GitHub account:**
+1. Copy/generate the SSH key as `/home/j52/.ssh/id_<name>`
+2. Add a `Host github-<name>` entry to `/home/j52/.ssh/config`
+3. Set the repo's remote URL to use `git@github-<name>:org/repo.git`
+
 ## Known Issues
 
-- **Worker not fully operational** — needs ANTHROPIC_API_KEY configured on VM for Claude Code
-- **No tool proxy** — Cloud Run API cannot yet dispatch tool calls to the worker VM (need HTTP endpoint on worker or Pub/Sub bridge)
-- **No projects cloned on VM** — `/opt/j52/repos/` is empty, need to clone repos and register projects
 - **Desktop app not switched** — still using old token-broker, needs to point to j52-api
 - **`tsconfig.tsbuildinfo` caching** — was causing stale builds on VM, fixed by adding to `.gitignore`
+- **gh CLI not installed on VM** — Claude Code can't create PRs yet
 
 ## Environment / Deployment
 

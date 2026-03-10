@@ -33,3 +33,20 @@
 - **Key decisions:** None — minor template wording update
 - **Files modified:** `START.md` (xx.save description updated)
 - **Next priority:** Wire up tool proxy between API and worker VM
+
+## Session 3 — 2026-03-10
+- **Model:** Claude Opus 4.6
+- **What was done:** Fixed J5 → Claude Code git pipeline on VM
+  1. **VM: Fixed Dixmont repo ownership** — `chown -R j52:j52` (was owned by `zimatabrand` from manual SSH)
+  2. **VM: Multi-account SSH** — Copied dixmontselect-sys key as `id_dixmont`, created `/home/j52/.ssh/config` with `github-dixmont` host alias
+  3. **VM: Updated Dixmont remote** — `git@github-dixmont:dixmontselect-sys/dixmont-site.git`
+  4. **VM: Git global config** — Set `user.name`, `user.email`, `safe.directory *` for j52 user
+  5. **Runner: Added `prepareProject()`** — Best-effort `git pull --ff-only` before running Claude Code
+  6. **Runner: Git info in prompt** — Reads `git remote -v` + `git branch` and includes as `=== GIT INFO ===` section so Claude Code knows which account/branch to push to
+  7. **Deployed** — Pushed, pulled on VM, built, restarted worker. Verified it immediately worked on a queued Dixmont task.
+- **Key decisions:**
+  - Wildcard `safe.directory *` — j52 only accesses its own repos, no security risk
+  - Best-effort pull — failures don't block the task, just log a warning
+  - SSH host aliases for multi-account GitHub — each project repo uses the correct alias in its remote URL
+- **Files modified:** `packages/worker/src/claude-runner/runner.ts`, VM files (`/home/j52/.ssh/config`, `/home/j52/.ssh/id_dixmont`)
+- **Next priority:** End-to-end voice test via J5 desktop app on Dixmont project

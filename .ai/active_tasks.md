@@ -2,9 +2,9 @@
 
 ## Current Priority
 
-1. [HIGH] Wire up tool proxy between Cloud Run API and worker VM — Need HTTP endpoint on worker so API can dispatch tool calls (shell, file-ops, git, Claude Code) to the VM
-2. [HIGH] Configure ANTHROPIC_API_KEY on VM — Claude Code CLI needs API key to run sessions
-3. [HIGH] Clone first project repo to VM — `/opt/j52/repos/` is empty, need to register a project and clone its repo
+1. [HIGH] End-to-end voice test — Use J5 desktop app to set Dixmont working dir and ask for a change, verify full pipeline works
+2. [MED] Document multi-account SSH setup for new projects — When cloning new repos that use non-default GitHub accounts, their remote needs the correct host alias
+3. [MED] Install gh CLI on VM — Useful for PR creation from Claude Code sessions
 
 ## Backlog
 
@@ -16,7 +16,6 @@
 - [ ] Add rate limiting middleware to API
 - [ ] Add structured logging (Cloud Logging integration)
 - [ ] Set up monitoring/alerting for VM and Cloud Run
-- [ ] Add CI/CD workflow for worker deployment to VM
 - [ ] Implement project watcher (fs.watch) on VM for auto-detecting changes
 
 ## Completed
@@ -33,3 +32,10 @@
 - [DONE] Verify all API endpoints working end-to-end — 2026-02-26
 - [DONE] Set up systemd service for worker on VM — 2026-02-26
 - [DONE] Migrate to standard `.ai/` context system — 2026-02-26
+- [DONE] Wire up tool proxy (worker HTTP server on port 9000) — 2026-03-04
+- [DONE] Configure ANTHROPIC_API_KEY on VM — 2026-03-04
+- [DONE] Clone Dixmont project repo to VM — 2026-03-04
+- [DONE] Context-aware Claude Code runner with xx.save protocol — 2026-03-06
+- [DONE] Add CI/CD workflow for worker deployment — 2026-03-06
+- [DONE] Fix git pipeline: ownership, SSH multi-account, git config, safe.directory — 2026-03-10
+- [DONE] Runner: prepareProject() with git pull + git info in prompt — 2026-03-10
